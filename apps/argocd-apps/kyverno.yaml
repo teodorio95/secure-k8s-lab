@@ -38,3 +38,14 @@ spec:
       - CreateNamespace=true
       # Kyverno CRDs exceed the client-side last-applied annotation limit.
       - ServerSideApply=true
+      - RespectIgnoreDifferences=true
+  # Kyverno's CRDs are huge and the API server fills in schema defaults, so
+  # ArgoCD reports them perpetually OutOfSync. Ignore the server-defaulted parts
+  # (the app stays Healthy and these fields aren't ours to manage).
+  ignoreDifferences:
+    - group: apiextensions.k8s.io
+      kind: CustomResourceDefinition
+      jqPathExpressions:
+        - .spec.versions[].schema.openAPIV3Schema
+        - .spec.conversion
+        - .spec.preserveUnknownFields
