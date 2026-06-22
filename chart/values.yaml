@@ -1,0 +1,57 @@
+# -- Override the chart's base name.
+nameOverride: ""
+# -- Fully override the generated resource name.
+fullnameOverride: ""
+
+namespace:
+  # -- Create the namespace as part of the chart (carries the PSA labels).
+  create: true
+  name: juice-shop
+  podSecurity:
+    # -- Pod Security Standard enforced on the namespace.
+    enforce: baseline
+    # -- PSS level only warned about (not enforced).
+    warn: restricted
+
+replicaCount: 1
+
+image:
+  repository: bkimminich/juice-shop
+  tag: "v17.1.1"
+  pullPolicy: IfNotPresent
+
+service:
+  type: ClusterIP
+  port: 3000
+  targetPort: 3000
+
+resources:
+  requests:
+    cpu: 100m
+    memory: 256Mi
+  limits:
+    cpu: 500m
+    memory: 512Mi
+
+securityContext:
+  pod:
+    runAsNonRoot: true
+    runAsUser: 65532
+    seccompProfile:
+      type: RuntimeDefault
+  container:
+    allowPrivilegeEscalation: false
+    # Juice Shop writes to its working directory, so the root FS stays writable.
+    readOnlyRootFilesystem: false
+    capabilities:
+      drop: ["ALL"]
+
+# The defensive posture. Flip `enabled` to false to deploy the "before"
+# (wide-open) version for an insecure/secure comparison.
+networkPolicy:
+  # -- Master switch for the whole default-deny posture.
+  enabled: true
+  # -- The only ingress port exposed to the attacker.
+  allowedIngressPort: 3000
+  # -- Allow egress to cluster DNS (kube-system) — the only egress granted.
+  dnsEgress: true
