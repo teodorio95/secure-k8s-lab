@@ -32,8 +32,8 @@ flowchart LR
         end
         A -. GitOps sync .-> J
     end
-    K -->|only :3000 allowed| J
-    J -.x|egress blocked except DNS| internal[(rest of cluster)]
+    K -->|"only :3000 allowed"| J
+    J --x|"egress blocked except DNS"| internal[(rest of cluster)]
 ```
 
 **Defensive posture baked in:**
