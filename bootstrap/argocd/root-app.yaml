@@ -1,0 +1,25 @@
+# App-of-apps: the single Application that bootstraps everything else.
+# ArgoCD watches apps/argocd-apps/ and creates one Application per file there.
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: root
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+  source:
+    # CHANGE THIS to your GitLab repo URL once pushed:
+    repoURL: https://gitlab.com/<your-group>/secure-k8s-lab.git
+    targetRevision: HEAD
+    path: apps/argocd-apps
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: argocd
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true

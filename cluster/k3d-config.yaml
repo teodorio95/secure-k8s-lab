@@ -1,0 +1,26 @@
+# Declarative k3d cluster definition.
+# Runs entirely on your local Docker — zero cloud cost.
+# Create with: k3d cluster create --config cluster/k3d-config.yaml
+apiVersion: k3d.io/v1alpha5
+kind: Simple
+metadata:
+  name: secure-lab
+servers: 1
+agents: 1
+image: rancher/k3s:v1.30.4-k3s1
+ports:
+  # Expose the Juice Shop NodePort/ingress on localhost for the attacker VM.
+  - port: 8081:80
+    nodeFilters:
+      - loadbalancer
+options:
+  k3d:
+    wait: true
+  k3s:
+    nodeLabels:
+      - label: lab=secure-k8s-lab
+        nodeFilters:
+          - server:*
+  kubeconfig:
+    updateDefaultKubeconfig: true
+    switchCurrentContext: true

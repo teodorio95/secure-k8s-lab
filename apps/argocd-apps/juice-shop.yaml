@@ -1,0 +1,27 @@
+# ArgoCD Application for the Juice Shop target + its network policies.
+# Synced automatically by the root app-of-apps.
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: juice-shop
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+  sources:
+    - repoURL: https://gitlab.com/<your-group>/secure-k8s-lab.git
+      targetRevision: HEAD
+      path: apps/juice-shop
+    - repoURL: https://gitlab.com/<your-group>/secure-k8s-lab.git
+      targetRevision: HEAD
+      path: policies/juice-shop
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: juice-shop
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
