@@ -46,6 +46,16 @@ securityContext:
     capabilities:
       drop: ["ALL"]
 
+# Expose the app through the cluster's Traefik ingress (the k3d loadbalancer
+# container), so it's reachable persistently at the mapped host port — no
+# `kubectl port-forward` / terminal needed. k3d maps host 8081 -> Traefik :80.
+ingress:
+  # -- Create an Ingress so the app is reachable at http://localhost:8081.
+  enabled: true
+  className: traefik
+  # -- Optional host. Empty = match any host (reachable directly on the port).
+  host: ""
+
 # The defensive posture. Flip `enabled` to false to deploy the "before"
 # (wide-open) version for an insecure/secure comparison.
 networkPolicy:
