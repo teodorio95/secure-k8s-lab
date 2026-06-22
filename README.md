@@ -57,9 +57,20 @@ make up            # create cluster + install ArgoCD + sync the lab
 make argocd-pass   # print the ArgoCD admin password
 make argocd-ui     # port-forward the ArgoCD UI -> https://localhost:8080
 make juice-ui      # port-forward Juice Shop   -> http://localhost:3000
+make verify-netpol # prove egress is blocked / DNS allowed (the isolation)
 make kyverno-reports # show what the Kyverno guardrails flagged (Audit mode)
 make down          # tear everything down
 ```
+
+### Accessing the apps
+
+- **Juice Shop** is exposed through the cluster's **Traefik ingress** (the k3d
+  loadbalancer container), so it's reachable persistently at
+  **<http://localhost:8081>** — no terminal/port-forward needed. `make juice-ui`
+  is just an ad-hoc alternative on `:3000`.
+- **ArgoCD UI** uses `make argocd-ui` (port-forward, terminal-bound) at
+  <https://localhost:8080> — self-signed cert, so accept the browser warning.
+  User `admin`, password from `make argocd-pass`.
 
 ## How NetworkPolicies are actually enforced
 
@@ -109,7 +120,11 @@ secure-k8s-lab/
 │       ├── namespace.yaml
 │       ├── deployment.yaml
 │       ├── service.yaml
+│       ├── ingress.yaml          # Traefik ingress -> http://localhost:8081
 │       └── networkpolicy.yaml
+├── .pre-commit-config.yaml      # local quality gates (gitleaks, helm lint, hygiene)
+├── .markdownlint.yaml
+├── .vscode/                     # recommended extensions + format-on-save
 └── docs/
     └── architecture.md
 ```
