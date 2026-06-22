@@ -78,7 +78,16 @@ secure-k8s-lab/
 │       └── root-app.yaml        # app-of-apps entry point
 ├── apps/
 │   └── argocd-apps/
-│       └── juice-shop.yaml      # ArgoCD Application -> renders chart/
+│       ├── juice-shop.yaml      # ArgoCD Application -> renders chart/
+│       ├── kyverno.yaml         # ArgoCD Application -> upstream Kyverno chart
+│       └── kyverno-policies.yaml# ArgoCD Application -> policies/kyverno
+├── policies/
+│   └── kyverno/                 # guardrails: validate / mutate / generate
+│       ├── 01-disallow-latest-tag.yaml
+│       ├── 02-require-non-root.yaml
+│       ├── 03-require-resource-limits.yaml
+│       ├── 04-mutate-default-securitycontext.yaml
+│       └── 05-generate-default-deny-netpol.yaml
 ├── chart/                       # our own Helm chart (app + security controls)
 │   ├── Chart.yaml
 │   ├── values.yaml              # secure defaults (networkPolicy.enabled: true)

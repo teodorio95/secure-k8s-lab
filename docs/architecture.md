@@ -51,6 +51,38 @@ make verify-netpol   # confirms egress to the internet is BLOCKED
 This is the kind of evidence to screenshot for the portfolio: a deliberately
 vulnerable app that still cannot reach out of its namespace.
 
+## Admission control with Kyverno (the enforcement backstop)
+
+Two complementary control points enforce the same standards:
+
+| Control point | Where | Strength | Weakness |
+|---------------|-------|----------|----------|
+| Shift-left scanning | CI (project #2) | Catches issues before merge | Can be bypassed (skip CI) |
+| **Admission control** | **Kyverno (cluster)** | **Cannot be bypassed** | Runs only at apply time |
+
+Defense in depth = both. Kyverno is installed from the upstream chart and
+configured by our own `ClusterPolicy` pack in `policies/kyverno/`, showing all
+three policy mechanisms:
+
+- **validate** (`01`–`03`) — check & report/block: no `:latest`, run as non-root,
+  require resource limits. Started in **Audit** mode (`validate.failureAction: Audit`).
+- **mutate** (`04`) — auto-fill a hardened `securityContext` on pods that omit it,
+  using the `+(...)` anchor (adds only if missing; never overrides).
+- **generate** (`05`) — auto-create a default-deny `NetworkPolicy` in every new
+  namespace (system namespaces excluded), so the network posture is automatic.
+
+### Audit → Enforce rollout
+
+Policies ship in **Audit** (report only, nothing blocked) so you can review
+`make kyverno-reports` and confirm nothing legitimate would break. Once reports
+are clean, flip `validate.failureAction` to **Enforce** to actively reject
+violations. This is how you introduce policy without taking down running
+workloads.
+
+> Note: Pod Security Admission (the namespace labels in the chart) is the
+> lightweight built-in baseline; Kyverno is the superset that expresses what PSA
+> cannot (image tags, resource limits, mutation, generation).
+
 ## What changes in later projects
 
 - **#2 devsecops-pipeline** — scans these manifests (Checkov/tfsec) and the

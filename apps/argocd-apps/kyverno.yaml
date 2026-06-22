@@ -1,0 +1,40 @@
+# Kyverno admission controller — installed from the upstream Helm chart.
+# Heavy off-the-shelf infra => consume upstream chart (vs. our own for the app).
+# sync-wave -2: must be Healthy before the policies (wave -1) are applied.
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: kyverno
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "-2"
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+  source:
+    repoURL: https://kyverno.github.io/kyverno/
+    chart: kyverno
+    targetRevision: 3.8.1
+    helm:
+      values: |
+        # Lightweight footprint for a local k3d lab.
+        admissionController:
+          replicas: 1
+        backgroundController:
+          replicas: 1
+        cleanupController:
+          replicas: 1
+        reportsController:
+          replicas: 1
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: kyverno
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      # Kyverno CRDs exceed the client-side last-applied annotation limit.
+      - ServerSideApply=true

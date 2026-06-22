@@ -1,0 +1,36 @@
+# VALIDATE (Audit): flag images using ':latest' or no tag at all.
+# :latest is non-reproducible — you can't tell which build is actually running.
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: disallow-latest-tag
+  annotations:
+    policies.kyverno.io/title: Disallow Latest Tag
+    policies.kyverno.io/category: Supply Chain
+spec:
+  background: true
+  rules:
+    - name: require-image-tag
+      match:
+        any:
+          - resources:
+              kinds: [Pod]
+      validate:
+        failureAction: Audit
+        message: "An explicit image tag is required (no untagged images)."
+        pattern:
+          spec:
+            containers:
+              - image: "*:*"
+    - name: disallow-latest-tag
+      match:
+        any:
+          - resources:
+              kinds: [Pod]
+      validate:
+        failureAction: Audit
+        message: "Using the ':latest' tag is not allowed; pin a specific version."
+        pattern:
+          spec:
+            containers:
+              - image: "!*:latest"
