@@ -16,11 +16,8 @@ repos:
         exclude: ^chart/templates/
       - id: check-added-large-files
 
-  - repo: https://github.com/igorshubovych/markdownlint-cli
-    rev: v0.49.0
-    hooks:
-      - id: markdownlint
-        args: [--fix]
+  # Markdown linting is handled by the VS Code markdownlint extension (it reads
+  # .markdownlint.yaml). Kept out of pre-commit to avoid the Node toolchain.
 
   - repo: https://github.com/gitleaks/gitleaks
     rev: v8.30.1
