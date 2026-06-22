@@ -19,6 +19,25 @@ on EKS), spin it up only for the demo, capture screenshots/Terraform, and
   its security controls ship together as one release.
 - `selfHeal: true` + `prune: true` mean the cluster state always matches Git —
   if an attacker tampers with a live resource, ArgoCD reverts it.
+- ArgoCD is pinned to **v3.4.4** (see `ARGOCD_VER` in the Makefile).
+
+The root app syncs three things: the **Juice Shop** chart, **Kyverno** (upstream
+chart), and our **Kyverno policy** pack.
+
+> **Known cosmetic drift:** Kyverno's CRDs are huge and the API server fills in
+> schema defaults, so the in-cluster ArgoCD controller reports the `kyverno` app
+> `OutOfSync` under `ServerSideApply`, even though `argocd app diff kyverno --core`
+> shows no real diff and `ignoreDifferences` is configured. The app stays
+> **Healthy** and policies enforce — it's a documented ArgoCD + large-CRD quirk,
+> not a deployment problem.
+
+## Accessing the apps
+
+Juice Shop is exposed via the cluster's **Traefik ingress** (`chart/templates/
+ingress.yaml`) through the k3d loadbalancer container, so it's reachable
+persistently at `http://localhost:8081` with no `kubectl port-forward`. This is
+the difference between a *persistent container-backed endpoint* (ingress) and an
+*ad-hoc client-side tunnel* (`make juice-ui` / `make argocd-ui`).
 
 ## Why our own Helm chart (not a third-party one)
 
