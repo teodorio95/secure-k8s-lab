@@ -44,9 +44,20 @@ kyverno-reports: ## Show Kyverno policy reports (what Audit mode flagged)
 	kubectl get policyreport -A 2>/dev/null || echo "(no reports yet — give the background controller a minute)"
 
 verify-netpol: ## Prove egress is locked down (should FAIL to reach the internet)
-	@echo "==> Attempting external egress from a juice-shop pod (expected: blocked)"
-	-kubectl -n juice-shop exec deploy/juice-shop -- \
-		sh -c 'wget -T 5 -qO- https://example.com >/dev/null 2>&1 && echo REACHABLE || echo BLOCKED'
+	@echo "==> Spinning up a labelled debug pod to test external egress (expected: BLOCKED)"
+	@# The juice-shop image is distroless (no shell), so we use a labelled busybox
+	@# pod that inherits the same NetworkPolicies (podSelector app=juice-shop).
+	@kubectl -n juice-shop delete pod netcheck --ignore-not-found >/dev/null 2>&1
+	@kubectl -n juice-shop run netcheck --image=busybox:1.36 --labels=app=juice-shop \
+		--restart=Never --command -- sleep 60 >/dev/null
+	@kubectl -n juice-shop wait --for=condition=Ready pod/netcheck --timeout=60s >/dev/null
+	@printf "external egress (1.1.1.1:443): "
+	@kubectl -n juice-shop exec netcheck -- sh -c \
+		'nc -w 4 -z 1.1.1.1 443 && echo "REACHABLE — netpol NOT enforced" || echo "BLOCKED — egress denied (expected)"'
+	@printf "cluster DNS (allowed): "
+	@kubectl -n juice-shop exec netcheck -- sh -c \
+		'nslookup kubernetes.default.svc.cluster.local >/dev/null 2>&1 && echo "RESOLVES (expected)" || echo "FAILED"'
+	@kubectl -n juice-shop delete pod netcheck --wait=false >/dev/null
 
 down: ## Delete the cluster
 	k3d cluster delete $(CLUSTER)
