@@ -1,0 +1,30 @@
+# MUTATE: auto-fill a hardened securityContext on any pod that omits it.
+# The `+(...)` anchor adds the key ONLY if missing — never overrides what the
+# author set. This is the "guardrail that fixes for you" — no manual repair.
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: add-default-securitycontext
+  annotations:
+    policies.kyverno.io/title: Add Default SecurityContext
+    policies.kyverno.io/category: Pod Security
+spec:
+  rules:
+    - name: add-securitycontext-defaults
+      match:
+        any:
+          - resources:
+              kinds: [Pod]
+      mutate:
+        patchStrategicMerge:
+          spec:
+            securityContext:
+              +(runAsNonRoot): true
+              +(seccompProfile):
+                type: RuntimeDefault
+            containers:
+              - (name): "*"
+                securityContext:
+                  +(allowPrivilegeEscalation): false
+                  +(capabilities):
+                    drop: ["ALL"]

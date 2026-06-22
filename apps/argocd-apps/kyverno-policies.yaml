@@ -1,0 +1,31 @@
+# Our ClusterPolicy pack (the guardrails). Applied after Kyverno is Healthy.
+# sync-wave -1: after kyverno (wave -2), before the workloads (wave 0).
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: kyverno-policies
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "-1"
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+  source:
+    repoURL: https://gitlab.com/teodorio95/secure-k8s-lab.git
+    targetRevision: HEAD
+    path: policies/kyverno
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: kyverno
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    # CRDs may still be registering on first install — retry instead of failing.
+    retry:
+      limit: 5
+      backoff:
+        duration: 10s
+        maxDuration: 2m
+        factor: 2

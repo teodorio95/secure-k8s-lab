@@ -38,6 +38,11 @@ argocd-ui: ## Port-forward the ArgoCD UI to https://localhost:8080
 juice-ui: ## Port-forward Juice Shop to http://localhost:3000
 	kubectl -n juice-shop port-forward svc/juice-shop 3000:3000
 
+kyverno-reports: ## Show Kyverno policy reports (what Audit mode flagged)
+	kubectl get clusterpolicy
+	@echo ""
+	kubectl get policyreport -A 2>/dev/null || echo "(no reports yet — give the background controller a minute)"
+
 verify-netpol: ## Prove egress is locked down (should FAIL to reach the internet)
 	@echo "==> Attempting external egress from a juice-shop pod (expected: blocked)"
 	-kubectl -n juice-shop exec deploy/juice-shop -- \

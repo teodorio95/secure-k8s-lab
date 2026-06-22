@@ -1,0 +1,44 @@
+# GENERATE: auto-create a default-deny NetworkPolicy in every new namespace,
+# so the network posture is automatic — not something you remember per app.
+# System / infra namespaces are excluded so the cluster keeps working.
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: generate-default-deny-netpol
+  annotations:
+    policies.kyverno.io/title: Generate Default-Deny NetworkPolicy
+    policies.kyverno.io/category: Network Security
+spec:
+  generateExisting: false
+  rules:
+    - name: default-deny-on-new-namespace
+      match:
+        any:
+          - resources:
+              kinds: [Namespace]
+      exclude:
+        any:
+          - resources:
+              names:
+                - kube-system
+                - kube-public
+                - kube-node-lease
+                - kube-cluster-mgmt
+                - default
+                - kyverno
+                - argocd
+      generate:
+        apiVersion: networking.k8s.io/v1
+        kind: NetworkPolicy
+        name: default-deny-all
+        namespace: "{{request.object.metadata.name}}"
+        synchronize: true
+        data:
+          metadata:
+            labels:
+              app.kubernetes.io/managed-by: kyverno
+          spec:
+            podSelector: {}
+            policyTypes:
+              - Ingress
+              - Egress
