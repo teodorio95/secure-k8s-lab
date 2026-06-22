@@ -39,13 +39,13 @@ spec:
       # Kyverno CRDs exceed the client-side last-applied annotation limit.
       - ServerSideApply=true
       - RespectIgnoreDifferences=true
-  # Kyverno's CRDs are huge and the API server fills in schema defaults, so
-  # ArgoCD reports them perpetually OutOfSync. Ignore the server-defaulted parts
-  # (the app stays Healthy and these fields aren't ours to manage).
+  # The API server / Kyverno add fields to these CRDs that the chart doesn't
+  # declare (an empty metadata.labels map and per-version selectableFields), so
+  # ArgoCD reported them perpetually OutOfSync. Ignore exactly those fields —
+  # confirmed via `argocd app diff kyverno --core`.
   ignoreDifferences:
     - group: apiextensions.k8s.io
       kind: CustomResourceDefinition
       jqPathExpressions:
-        - .spec.versions[].schema.openAPIV3Schema
-        - .spec.conversion
-        - .spec.preserveUnknownFields
+        - .metadata.labels
+        - .spec.versions[].selectableFields
