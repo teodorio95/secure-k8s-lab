@@ -1,5 +1,5 @@
 CLUSTER       := secure-lab
-ARGOCD_VER    := v2.12.4
+ARGOCD_VER    := v3.4.4
 ARGOCD_NS     := argocd
 
 .PHONY: help up down argocd argocd-pass argocd-ui juice-ui root-app verify-netpol
