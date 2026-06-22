@@ -40,6 +40,7 @@ flowchart LR
 - `default-deny` ingress **and** egress in the `juice-shop` namespace
 - Only port `3000` ingress is allowed (the app), nothing else
 - Egress allowed **only** to cluster DNS — the target cannot pivot to the rest of the cluster
+- **Kyverno** admission control enforces guardrails cluster-wide (no `:latest`, non-root, resource limits) and auto-generates a default-deny policy in new namespaces
 - Everything is declarative and synced by ArgoCD (app-of-apps pattern)
 
 ## Prerequisites
@@ -47,7 +48,7 @@ flowchart LR
 - [Docker](https://docs.docker.com/get-docker/)
 - [k3d](https://k3d.io/) (`brew install k3d`)
 - [kubectl](https://kubernetes.io/docs/tasks/tools/)
-- [helm](https://helm.sh/) (optional, for later projects)
+- [helm](https://helm.sh/) — used to render/inspect the Juice Shop chart (`make` deploys via ArgoCD)
 
 ## Quick start
 
@@ -56,15 +57,26 @@ make up            # create cluster + install ArgoCD + sync the lab
 make argocd-pass   # print the ArgoCD admin password
 make argocd-ui     # port-forward the ArgoCD UI -> https://localhost:8080
 make juice-ui      # port-forward Juice Shop   -> http://localhost:3000
+make kyverno-reports # show what the Kyverno guardrails flagged (Audit mode)
 make down          # tear everything down
 ```
 
 ## How NetworkPolicies are actually enforced
 
 k3d ships k3s, which includes an embedded NetworkPolicy controller (kube-router),
-so the `default-deny` policies in [policies/](policies/) are **enforced for real** —
-not silently ignored as they would be on a bare flannel setup. In project #5 we swap
-the CNI for Cilium to add L7-aware policies and runtime visibility.
+so the `default-deny` policies in [chart/templates/networkpolicy.yaml](chart/templates/networkpolicy.yaml)
+are **enforced for real** — not silently ignored as they would be on a bare flannel
+setup. In project #5 we swap the CNI for Cilium to add L7-aware policies and runtime
+visibility.
+
+## Two layers of policy: chart vs Kyverno
+
+- The **Helm chart** ships the workload's *own* NetworkPolicies + pod security —
+  the app carries its cage with it.
+- **Kyverno** ([policies/kyverno/](policies/kyverno/)) enforces guardrails
+  *cluster-wide* at admission time (no `:latest`, non-root, resource limits),
+  mutates missing security contexts, and generates a default-deny policy in any
+  new namespace. Started in **Audit** mode — see [docs/architecture.md](docs/architecture.md).
 
 ## Repository layout
 
