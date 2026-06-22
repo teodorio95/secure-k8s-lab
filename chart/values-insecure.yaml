@@ -1,0 +1,5 @@
+# "Before" overlay for the insecure/secure demo.
+# Render with: helm template juice-shop chart -f chart/values-insecure.yaml
+# Everything wide open: no network isolation, baseline PSA only.
+networkPolicy:
+  enabled: false

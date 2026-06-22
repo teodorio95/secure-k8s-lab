@@ -1,4 +1,4 @@
-# ArgoCD Application for the Juice Shop target + its network policies.
+# ArgoCD Application for the Juice Shop target, rendered from our own Helm chart.
 # Synced automatically by the root app-of-apps.
 apiVersion: argoproj.io/v1alpha1
 kind: Application
@@ -9,19 +9,18 @@ metadata:
     - resources-finalizer.argocd.argoproj.io
 spec:
   project: default
-  sources:
-    - repoURL: https://gitlab.com/teodorio95/secure-k8s-lab.git
-      targetRevision: HEAD
-      path: apps/juice-shop
-    - repoURL: https://gitlab.com/teodorio95/secure-k8s-lab.git
-      targetRevision: HEAD
-      path: policies/juice-shop
+  source:
+    repoURL: https://gitlab.com/teodorio95/secure-k8s-lab.git
+    targetRevision: HEAD
+    path: chart
+    helm:
+      valueFiles:
+        - values.yaml
   destination:
     server: https://kubernetes.default.svc
+    # The chart templates the namespace itself (with the PSA labels).
     namespace: juice-shop
   syncPolicy:
     automated:
       prune: true
       selfHeal: true
-    syncOptions:
-      - CreateNamespace=true

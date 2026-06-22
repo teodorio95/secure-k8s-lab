@@ -1,0 +1,62 @@
+{{- if .Values.networkPolicy.enabled }}
+# Default-deny posture: nothing in/out of the namespace unless explicitly
+# allowed below. The vulnerable target cannot pivot to the rest of the cluster.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ include "juice-shop.fullname" . }}-default-deny-all
+  namespace: {{ .Values.namespace.name }}
+  labels:
+    {{- include "juice-shop.labels" . | nindent 4 }}
+spec:
+  podSelector: {}
+  policyTypes:
+    - Ingress
+    - Egress
+---
+# The single doorway: ingress to the app port only.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ include "juice-shop.fullname" . }}-allow-ingress
+  namespace: {{ .Values.namespace.name }}
+  labels:
+    {{- include "juice-shop.labels" . | nindent 4 }}
+spec:
+  podSelector:
+    matchLabels:
+      {{- include "juice-shop.selectorLabels" . | nindent 6 }}
+  policyTypes:
+    - Ingress
+  ingress:
+    - ports:
+        - protocol: TCP
+          port: {{ .Values.networkPolicy.allowedIngressPort }}
+{{- if .Values.networkPolicy.dnsEgress }}
+---
+# The only egress granted: cluster DNS. No lateral movement / exfiltration.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ include "juice-shop.fullname" . }}-allow-dns-egress
+  namespace: {{ .Values.namespace.name }}
+  labels:
+    {{- include "juice-shop.labels" . | nindent 4 }}
+spec:
+  podSelector:
+    matchLabels:
+      {{- include "juice-shop.selectorLabels" . | nindent 6 }}
+  policyTypes:
+    - Egress
+  egress:
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: kube-system
+      ports:
+        - protocol: UDP
+          port: 53
+        - protocol: TCP
+          port: 53
+{{- end }}
+{{- end }}

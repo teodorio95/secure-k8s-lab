@@ -1,0 +1,16 @@
+apiVersion: v2
+name: juice-shop
+description: |
+  OWASP Juice Shop deployed as an intentionally vulnerable target, wrapped with
+  first-class security controls (default-deny network policies, DNS-only egress,
+  restricted pod security). Toggle networkPolicy.enabled to demo "insecure before
+  / secure after".
+type: application
+version: 0.1.0
+appVersion: "17.1.1"
+keywords:
+  - devsecops
+  - owasp
+  - network-policy
+maintainers:
+  - name: teodorio95

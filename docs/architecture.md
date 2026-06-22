@@ -15,20 +15,32 @@ on EKS), spin it up only for the demo, capture screenshots/Terraform, and
 
 - `bootstrap/argocd/root-app.yaml` is the single entry point.
 - It watches `apps/argocd-apps/`, where each file is an ArgoCD `Application`.
-- `juice-shop.yaml` deploys both the workload (`apps/juice-shop`) and its
-  network policies (`policies/juice-shop`) as two sources.
+- `juice-shop.yaml` renders our own Helm chart (`chart/`) — the workload **and**
+  its security controls ship together as one release.
 - `selfHeal: true` + `prune: true` mean the cluster state always matches Git —
   if an attacker tampers with a live resource, ArgoCD reverts it.
 
+## Why our own Helm chart (not a third-party one)
+
+Community Juice Shop charts are thin and don't carry the security controls that
+are the whole point here. Authoring our own chart keeps default-deny, DNS-only
+egress and pod security as first-class, parameterized values — and demonstrates
+chart authoring (templates, `values.yaml`, `_helpers.tpl`), not just chart
+consumption. Heavy off-the-shelf infra in later projects (Cilium, Falco,
+kube-prometheus-stack) is consumed from upstream charts instead.
+
 ## Defensive posture (the "defend" half of the loop)
 
-| Control | File | Effect |
-|---------|------|--------|
-| Default-deny ingress+egress | `policies/juice-shop/default-deny.yaml` | Nothing flows unless allowed |
-| DNS-only egress | `allow-dns.yaml` | Target can't pivot / exfiltrate |
-| Port 3000 ingress only | `allow-ingress-3000.yaml` | Single attack surface |
-| Pod Security: baseline | `namespace.yaml` | Blocks privileged pods |
-| Dropped capabilities, non-root | `deployment.yaml` | Reduces blast radius |
+| Control | Where | Effect |
+|---------|-------|--------|
+| Default-deny ingress+egress | `chart` `networkPolicy.enabled` | Nothing flows unless allowed |
+| DNS-only egress | `networkPolicy.dnsEgress` | Target can't pivot / exfiltrate |
+| App-port ingress only | `networkPolicy.allowedIngressPort` | Single attack surface |
+| Pod Security: baseline | `namespace.podSecurity` | Blocks privileged pods |
+| Dropped capabilities, non-root | `securityContext` | Reduces blast radius |
+
+Flip `networkPolicy.enabled: false` (see `chart/values-insecure.yaml`) to render
+the wide-open "before" version for an insecure/secure comparison.
 
 ## Verifying the controls actually work
 

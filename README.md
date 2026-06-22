@@ -77,19 +77,29 @@ secure-k8s-lab/
 │   └── argocd/
 │       └── root-app.yaml        # app-of-apps entry point
 ├── apps/
-│   ├── argocd-apps/
-│   │   └── juice-shop.yaml      # ArgoCD Application -> apps/juice-shop
-│   └── juice-shop/
+│   └── argocd-apps/
+│       └── juice-shop.yaml      # ArgoCD Application -> renders chart/
+├── chart/                       # our own Helm chart (app + security controls)
+│   ├── Chart.yaml
+│   ├── values.yaml              # secure defaults (networkPolicy.enabled: true)
+│   ├── values-insecure.yaml     # "before" overlay (networkPolicy.enabled: false)
+│   └── templates/
+│       ├── _helpers.tpl
 │       ├── namespace.yaml
 │       ├── deployment.yaml
-│       └── service.yaml
-├── policies/
-│   └── juice-shop/
-│       ├── default-deny.yaml
-│       ├── allow-dns.yaml
-│       └── allow-ingress-3000.yaml
+│       ├── service.yaml
+│       └── networkpolicy.yaml
 └── docs/
     └── architecture.md
+```
+
+### Insecure / secure demo
+
+The whole defensive posture is a single value flip — ideal for a before/after:
+
+```bash
+helm template juice-shop chart                              # secure: 3 NetworkPolicies
+helm template juice-shop chart -f chart/values-insecure.yaml # before: 0 NetworkPolicies
 ```
 
 ## ⚠️ Legal / safety note
