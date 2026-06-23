@@ -33,7 +33,9 @@ cilium: ## Bootstrap Cilium as the CNI (must precede ArgoCD — CNI chicken-and-
 
 argocd: ## Install ArgoCD into the cluster
 	kubectl create namespace $(ARGOCD_NS) --dry-run=client -o yaml | kubectl apply -f -
-	kubectl apply -n $(ARGOCD_NS) \
+	# Server-side apply: ArgoCD's ApplicationSet CRD is too large for the
+	# client-side last-applied annotation (kubectl apply would fail).
+	kubectl apply --server-side --force-conflicts -n $(ARGOCD_NS) \
 		-f https://raw.githubusercontent.com/argoproj/argo-cd/$(ARGOCD_VER)/manifests/install.yaml
 
 root-app: ## Apply the app-of-apps (after pushing repo + editing repoURL)
