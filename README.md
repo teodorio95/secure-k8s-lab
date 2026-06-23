@@ -59,6 +59,8 @@ make argocd-ui     # port-forward the ArgoCD UI -> https://localhost:8080
 make juice-ui      # port-forward Juice Shop   -> http://localhost:3000
 make verify-netpol # prove egress is blocked / DNS allowed (the isolation)
 make kyverno-reports # show what the Kyverno guardrails flagged (Audit mode)
+make hubble-ui     # network flows / L7 (Cilium) -> http://localhost:12000
+make falco-events  # tail runtime-detection alerts (project #5)
 make down          # tear everything down
 ```
 
@@ -74,11 +76,12 @@ make down          # tear everything down
 
 ## How NetworkPolicies are actually enforced
 
-k3d ships k3s, which includes an embedded NetworkPolicy controller (kube-router),
-so the `default-deny` policies in [chart/templates/networkpolicy.yaml](chart/templates/networkpolicy.yaml)
-are **enforced for real** — not silently ignored as they would be on a bare flannel
-setup. In project #5 we swap the CNI for Cilium to add L7-aware policies and runtime
-visibility.
+The CNI is **Cilium** (flannel + the k3s netpol controller are disabled in
+`cluster/k3d-config.yaml`; `make up` bootstraps Cilium before ArgoCD). So the
+`default-deny` policies in [chart/templates/networkpolicy.yaml](chart/templates/networkpolicy.yaml)
+are **enforced for real**, and we also get **Hubble** network observability and
+L7-aware policies. The runtime-detection layer (Falco + Cilium L7) is project #5,
+[runtime-security](../runtime-security), pulled into this cluster via ArgoCD.
 
 ## Two layers of policy: chart vs Kyverno
 

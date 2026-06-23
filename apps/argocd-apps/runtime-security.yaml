@@ -1,0 +1,28 @@
+# Pulls the runtime-security repo (project #5) into this cluster via ArgoCD.
+# That repo holds its own ArgoCD Applications (Falco + Cilium L7 policies), so
+# this is a cross-repo app-of-apps. Cilium itself is bootstrapped by `make up`
+# (a CNI can't be GitOps'd — ArgoCD needs networking to run).
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: runtime-security
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "1"
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+  source:
+    repoURL: https://gitlab.com/teodorio95/runtime-security.git
+    targetRevision: HEAD
+    path: gitops
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: argocd
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true

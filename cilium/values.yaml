@@ -1,0 +1,25 @@
+# Cilium values for the k3d lab. Installed at bootstrap (see `make cilium`),
+# because the CNI must exist before ArgoCD's own pods can get IPs.
+operator:
+  # Single replica is plenty for a local lab.
+  replicas: 1
+
+# Let Kubernetes (k3s controller-manager) hand out Pod CIDRs.
+ipam:
+  mode: kubernetes
+
+# Hubble = the network-observability half of project #5: see/identify every
+# flow, including what the NetworkPolicies DROP.
+hubble:
+  enabled: true
+  relay:
+    enabled: true
+  ui:
+    enabled: true
+  metrics:
+    enabled:
+      - dns
+      - drop
+      - tcp
+      - flow
+      - http
