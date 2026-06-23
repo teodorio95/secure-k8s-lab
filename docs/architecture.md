@@ -106,5 +106,8 @@ workloads.
 
 - **#2 devsecops-pipeline** — scans these manifests (Checkov/tfsec) and the
   image (Trivy) in GitLab CI before they ever reach the cluster.
-- **#5 runtime-security** — swaps k3s flannel for **Cilium** to get L7 network
-  policies and Hubble visibility, plus Falco for syscall-level detection.
+- **#5 runtime-security** — **now integrated**: the cluster runs **Cilium**
+  (flannel disabled, bootstrapped in `make up`) for Hubble visibility + L7
+  policies, and **Falco** for syscall-level detection is pulled in via ArgoCD
+  from the [runtime-security](../runtime-security) repo (cross-repo app-of-apps,
+  `apps/argocd-apps/runtime-security.yaml`).

@@ -21,6 +21,16 @@ options:
       - label: lab=secure-k8s-lab
         nodeFilters:
           - server:*
+    # Disable k3s's built-in flannel + network-policy controller so Cilium can
+    # be the CNI (installed at bootstrap by `make up`). Nodes stay NotReady
+    # until Cilium is up — expected.
+    extraArgs:
+      - arg: --flannel-backend=none
+        nodeFilters:
+          - server:*
+      - arg: --disable-network-policy
+        nodeFilters:
+          - server:*
   kubeconfig:
     updateDefaultKubeconfig: true
     switchCurrentContext: true
