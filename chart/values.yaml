@@ -25,13 +25,21 @@ service:
   port: 3000
   targetPort: 3000
 
+# Juice Shop loads all challenges into a Node/V8 heap; under attack traffic the
+# default heap hit the limit and OOM-crashed (FATAL: JS heap out of memory,
+# exitCode 133). Cap the old-space heap below the container memory limit so V8
+# GCs instead of dying.
+env:
+  - name: NODE_OPTIONS
+    value: "--max-old-space-size=768"
+
 resources:
   requests:
     cpu: 100m
-    memory: 256Mi
+    memory: 384Mi
   limits:
     cpu: 500m
-    memory: 512Mi
+    memory: 1Gi
 
 securityContext:
   pod:
